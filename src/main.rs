@@ -34,9 +34,15 @@ async fn main() {
         .and(warp::body::json())
         .and_then(handle_webhook);
 
+    let health_check = warp::get()
+        .and(warp::path("health"))
+        .map(|| warp::reply::json(&"OK"));
+
     // Start the server to listen for updates
     println!("Server started");
-    warp::serve(webhook_handler).run(([0, 0, 0, 0], 8080)).await;
+    warp::serve(webhook_handler.or(health_check))
+        .run(([0, 0, 0, 0], 8080))
+        .await;
 }
 
 async fn handle_webhook(
