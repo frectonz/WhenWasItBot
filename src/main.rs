@@ -4,11 +4,12 @@ use std::convert::Infallible;
 use std::env;
 use warp::Filter;
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct SendMessageRequest {
     chat_id: i64,
     text: String,
     parse_mode: Option<String>,
+    reply_to_message_id: Option<i64>,
 }
 
 #[tokio::main]
@@ -55,6 +56,11 @@ async fn handle_webhook(
         .get("message")
         .and_then(|m| m.get("chat").and_then(|c| c.get("id")));
 
+    let message_id = json
+        .get("message")
+        .and_then(|m| m.get("message_id"))
+        .or_else(|| json.get("edited_message").and_then(|m| m.get("message_id")));
+
     let chat_id = match chat_id {
         Some(chat_id) => chat_id.as_i64().unwrap(),
         None => return Ok(warp::reply()),
@@ -81,6 +87,7 @@ async fn handle_webhook(
                 chat_id,
                 text: format!("The message was sent on `{date_string}`"),
                 parse_mode: Some("MarkdownV2".to_string()),
+                reply_to_message_id: message_id.and_then(|m| m.as_i64()),
             };
             let send_message_url = format!("{api_url}/sendMessage");
 
@@ -91,6 +98,7 @@ async fn handle_webhook(
                 chat_id,
                 text: "Could not find the date of the forwarded message".to_string(),
                 parse_mode: None,
+                reply_to_message_id: message_id.and_then(|m| m.as_i64()),
             };
             let send_message_url = format!("{api_url}/sendMessage");
 
