@@ -111,5 +111,5 @@ async fn handle_webhook(
 
 fn timestamp_to_date_string(timestamp: i64) -> Option<String> {
     let naive_date_time = NaiveDateTime::from_timestamp_opt(timestamp, 0)?;
-    Some(naive_date_time.format("%A, %d %B %Y, %H:%M:%S").to_string())
+    Some(naive_date_time.format("%A, %B %d, %Y %H:%M:%S").to_string())
 }
