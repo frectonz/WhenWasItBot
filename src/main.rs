@@ -8,6 +8,7 @@ use warp::Filter;
 struct SendMessageRequest {
     chat_id: i64,
     text: String,
+    parse_mode: Option<String>,
 }
 
 #[tokio::main]
@@ -71,8 +72,6 @@ async fn handle_webhook(
                 None => return Ok(warp::reply()),
             };
 
-            dbg!(&timestamp);
-
             let date_string = match timestamp_to_date_string(timestamp) {
                 Some(date_string) => date_string,
                 None => return Ok(warp::reply()),
@@ -81,6 +80,7 @@ async fn handle_webhook(
             let request = SendMessageRequest {
                 chat_id,
                 text: format!("The message was sent on `{date_string}`"),
+                parse_mode: Some("MarkdownV2".to_string()),
             };
             let send_message_url = format!("{api_url}/sendMessage");
 
@@ -90,6 +90,7 @@ async fn handle_webhook(
             let request = SendMessageRequest {
                 chat_id,
                 text: "Could not find the date of the forwarded message".to_string(),
+                parse_mode: None,
             };
             let send_message_url = format!("{api_url}/sendMessage");
 
@@ -102,5 +103,5 @@ async fn handle_webhook(
 
 fn timestamp_to_date_string(timestamp: i64) -> Option<String> {
     let naive_date_time = NaiveDateTime::from_timestamp_opt(timestamp, 0)?;
-    Some(naive_date_time.format("%Y-%m-%d %H:%M:%S").to_string())
+    Some(naive_date_time.format("%A, %d %B %Y, %H:%M:%S").to_string())
 }
